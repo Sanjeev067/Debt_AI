@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debt AI Document Analyzer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .upload-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    input[type="file"] {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #005ea3;
+    }
+    .summary-card {
+      border: 1px solid #eee;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fefefe;
+      margin-bottom: 15px;
+    }
+    .summary-card h3 {
+      margin: 0 0 10px 0;
+      color: #222;
+    }
+    .summary-card small {
+      color: #888;
+    }
+    .summary-card p {
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Debt AI Document Analyzer</h1>
+
+    <div class="upload-section">
+      <input type="file" id="fileInput" accept=".pdf" />
+      <button onclick="uploadFile()">Upload & Analyze</button>
+    </div>
+
+    <div id="output"></div>
+
+    <h2>📚 Saved Summaries</h2>
+    <div id="summaries"></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select a PDF file first.");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      document.getElementById("output").innerText = "Analyzing... Please wait.";
+
+      const res = await fetch(`${API_BASE}/uploadfile/`, { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.status === "ok") {
+        alert("File analyzed successfully!");
+        loadSummaries();
+      } else {
+        alert("Error: " + data.message);
+      }
+    }
+
+    async function loadSummaries() {
+      const res = await fetch(`${API_BASE}/get_summaries/`);
+      const data = await res.json();
+
+      const container = document.getElementById("summaries");
+      container.innerHTML = "";
+
+      data.results.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "summary-card";
+        card.innerHTML = `
+          <h3>${item.file_name}</h3>
+          <small>${item.created_at}</small>
+          <p>${item.summary}</p>
+          <button onclick="downloadPDF('${item.file_name}', \`${item.summary.replace(/`/g, "\\`")}\`)">Download PDF</button>
+          <button onclick="deleteSummary('${item.file_name}')">Delete</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function downloadPDF(fileName, summary) {
+      const formData = new FormData();
+      formData.append("file_name", fileName);
+      formData.append("summary", summary);
+
+      const res = await fetch(`${API_BASE}/download_pdf/`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}_summary.pdf`;
+        link.click();
+      } else {
+        alert("Failed to download PDF");
+      }
+    }
+
+    async function deleteSummary(fileName) {
+      if (!confirm(`Are you sure you want to delete ${fileName}?`)) return;
+      const res = await fetch(`${API_BASE}/delete_summary/${fileName}`, { method: "DELETE" });
+      const data = await res.json();
+      alert(data.message);
+      loadSummaries();
+    }
+
+    // Load summaries on page load
+    loadSummaries();
+  </script>
+</body>
+</html>
