@@ -22,10 +22,10 @@ This system allows users to **upload PDF documents**, automatically **analyze** 
 | Component | Technology |
 |------------|-------------|
 | Backend | FastAPI (Python) |
-| AI Model | Google Gemini 1.5 Flash |
+| AI Model | Google Gemini 2.5 Flash |
 | Database | SQLite |
 | Frontend | HTML, CSS, JavaScript |
-| Containerization | Docker & Docker Compose |
+
 | Hosting (optional) | Render / Netlify |
 
 ---
