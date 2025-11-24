@@ -13,7 +13,7 @@ import fitz  # PyMuPDF for reading PDF text
 
 # --- Load environment variables ---
 load_dotenv()
-genai.configure(api_key="AIzaSyDAgFofHdQEcVLSKYf7Rom0fbbeyWZOemc")
+genai.configure(api_key=" ")
 
 app = FastAPI()
 
@@ -157,3 +157,4 @@ async def delete_summary(file_name: str):
         return JSONResponse({"status": "ok", "message": f"{file_name} deleted successfully"})
     except Exception as e:
         return JSONResponse({"status": "error", "message": str(e)})
+
